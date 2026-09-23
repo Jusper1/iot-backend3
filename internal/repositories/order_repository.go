@@ -17,12 +17,10 @@ func NewOrderRepository(db *gorm.DB) *OrderRepository {
 	return &OrderRepository{DB: db}
 }
 
-// Create
 func (r *OrderRepository) Create(order *models.Order) error {
 	return r.DB.Create(order).Error
 }
 
-// FindAll
 func (r *OrderRepository) FindAll() ([]models.Order, error) {
 	var orders []models.Order
 
@@ -35,7 +33,6 @@ func (r *OrderRepository) FindAll() ([]models.Order, error) {
 	return orders, err
 }
 
-// FindByID
 func (r *OrderRepository) FindByID(id uint) (*models.Order, error) {
 	var order models.Order
 
@@ -63,7 +60,6 @@ func (r *OrderRepository) FindByID(id uint) (*models.Order, error) {
 	return &order, err
 }
 
-// FindByKode
 func (r *OrderRepository) FindByKode(kode string) (*models.Order, error) {
 	var order models.Order
 
@@ -78,7 +74,6 @@ func (r *OrderRepository) FindByKode(kode string) (*models.Order, error) {
 	return &order, err
 }
 
-// ExistsByKode
 func (r *OrderRepository) ExistsByKode(kode string) (bool, error) {
 	var count int64
 
@@ -90,12 +85,10 @@ func (r *OrderRepository) ExistsByKode(kode string) (bool, error) {
 	return count > 0, err
 }
 
-// Update
 func (r *OrderRepository) Update(order *models.Order) error {
 	return r.DB.Save(order).Error
 }
 
-// Delete
 func (r *OrderRepository) Delete(id uint) error {
 	return r.DB.Delete(&models.Order{}, id).Error
 }

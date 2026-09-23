@@ -21,7 +21,6 @@ func NewOrderHandler(s *services.OrderService) *OrderHandler {
 	}
 }
 
-// GET /api/orders
 func (h *OrderHandler) FindAll(c *gin.Context) {
 	data, err := h.Service.FindAll()
 	if err != nil {
@@ -39,7 +38,6 @@ func (h *OrderHandler) FindAll(c *gin.Context) {
 	})
 }
 
-// GET /api/orders/:id
 func (h *OrderHandler) FindByID(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -70,8 +68,6 @@ func (h *OrderHandler) FindByID(c *gin.Context) {
 		"data":    data,
 	})
 }
-
-// GET /api/orders/kode/:kode
 func (h *OrderHandler) FindByKode(c *gin.Context) {
 	kode := c.Param("kode")
 
@@ -96,7 +92,6 @@ func (h *OrderHandler) FindByKode(c *gin.Context) {
 	})
 }
 
-// POST /api/orders
 func (h *OrderHandler) Create(c *gin.Context) {
 	var data models.Order
 
@@ -134,7 +129,6 @@ func (h *OrderHandler) Create(c *gin.Context) {
 	})
 }
 
-// PUT /api/orders/:id
 func (h *OrderHandler) Update(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -184,7 +178,6 @@ func (h *OrderHandler) Update(c *gin.Context) {
 	})
 }
 
-// DELETE /api/orders/:id
 func (h *OrderHandler) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {

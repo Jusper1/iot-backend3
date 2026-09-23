@@ -11,7 +11,6 @@ type ManualOrder struct {
 	DokumenFullSign    string `json:"dokumen_full_sign"`
 	WaktuPengiriman    string `json:"waktu_pengiriman"`
 
-	// perubahan pemnambahan
 	BulanPengirimanSPH             string `json:"bulan_pengiriman_sph"`
 	NomorSuratPenawaranHarga       string `json:"nomor_surat_penawaran_harga"`
 	NomorFormulirBerlangganan      string `json:"nomor_formulir_berlangganan"`

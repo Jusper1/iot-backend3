@@ -14,7 +14,7 @@ import (
 
 func main() {
 
-	// Load .env
+
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("Warning: .env tidak ditemukan")
@@ -26,9 +26,7 @@ func main() {
 	// Gin
 	r := gin.Default()
 
-	// =========================================================
 	// CORS
-	// =========================================================
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
@@ -50,16 +48,13 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	// =========================================================
 	// ROUTES
-	// =========================================================
+
 
 	routes.SetupRoutes(r, config.DB)
 
-	// =========================================================
 	// SERVER
-	// =========================================================
-
+	
 	port := os.Getenv("APP_PORT")
 
 	if port == "" {
