@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
+//test ubah 
 var DB *gorm.DB
 
 func ConnectDatabase() {
