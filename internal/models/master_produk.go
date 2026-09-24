@@ -8,7 +8,7 @@ type MasterProduk struct {
 	KodeProduk 	string `json:"kode_produk" gorm:"not null;uniqueIndex"`
 	NamaProduk 	string `json:"nama_produk" gorm:"not null"`
 	Harga 		float64 `json:"harga" gorm:"not null"`
-	Status 		string `json:"status" gorm:"not null"`
+	Status int `json:"status" gorm:"not null;default:1"`
 	JenisProduk *string `json:"jenis_produk"`
 
 	CreatedAt time.Time `json:"created_at"`

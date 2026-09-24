@@ -46,6 +46,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	documentRepository := repositories.NewDocumentRepository(db)
 	shipmentRepository := repositories.NewShipmentRepository(db)
 	iotInaprocRepository := repositories.NewIOTInaprocRepository(db)
+	iotManualRepository := repositories.NewIOTManualRepository(db)
 
 	// SERVICE
 
@@ -67,6 +68,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	documentServiceInst := services.NewDocumentService(documentRepository)
 	shipmentServiceInst := services.NewShipmentService(shipmentRepository)
 	iotInaprocService := services.NewIOTInaprocService(iotInaprocRepository)
+	iotManualService := services.NewIOTManualService(iotManualRepository)
 
 	// HANDLER
 
@@ -88,6 +90,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	documentHandler := handlers.NewDocumentHandler(documentServiceInst)
 	shipmentHandler := handlers.NewShipmentHandler(shipmentServiceInst)
 	iotInaprocHandler := handlers.NewIOTInaprocHandler(iotInaprocService)
+	iotManualHandler := handlers.NewIOTManualHandler(iotManualService)
 
 	// PROTECTED ROUTES
 
@@ -261,4 +264,11 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	protected.POST("/iot-inaproc", iotInaprocHandler.Create)
 	protected.PUT("/iot-inaproc/:id", iotInaprocHandler.Update)
 	protected.DELETE("/iot-inaproc/:id", iotInaprocHandler.Delete)
+
+	protected.GET("/iot-manual", iotManualHandler.FindAll)
+	protected.GET("/iot-manual/:id", iotManualHandler.FindByID)
+	protected.GET("/iot-manual/kode/:kode", iotManualHandler.FindByKode)
+	protected.POST("/iot-manual", iotManualHandler.Create)
+	protected.PUT("/iot-manual/:id", iotManualHandler.Update)
+	protected.DELETE("/iot-manual/:id", iotManualHandler.Delete)
 }
