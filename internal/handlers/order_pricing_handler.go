@@ -112,7 +112,7 @@ func (h *OrderPricingHandler) Update(c *gin.Context) {
 		return
 	}
 
-	var data models.OrderPricing
+	var data map[string]interface{}
 
 	if err := c.ShouldBindJSON(&data); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -122,10 +122,25 @@ func (h *OrderPricingHandler) Update(c *gin.Context) {
 		return
 	}
 
-	data.ID = uint(id)
-
-	if err := h.Service.Update(&data); err != nil {
+	if len(data) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "data update wajib diisi",
+		})
+		return
+	}
+
+	if err := h.Service.Update(uint(id), data); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	result, err := h.Service.FindByID(uint(id))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"message": err.Error(),
 		})
@@ -135,7 +150,7 @@ func (h *OrderPricingHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "pricing berhasil diperbarui",
-		"data":    data,
+		"data":    result,
 	})
 }
 

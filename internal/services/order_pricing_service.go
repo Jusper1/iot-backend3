@@ -48,12 +48,25 @@ func (s *OrderPricingService) FindByOrderID(orderID uint) (*models.OrderPricing,
 	return s.Repo.FindByOrderID(orderID)
 }
 
-func (s *OrderPricingService) Update(data *models.OrderPricing) error {
-	if data.ID == 0 || data.OrderID == 0 {
+func (s *OrderPricingService) Update(id uint, data map[string]interface{}) error {
+	if id == 0 {
 		return ErrInvalidPricing
 	}
 
-	return s.Repo.Update(data)
+	existing, err := s.Repo.FindByID(id)
+	if err != nil {
+		return err
+	}
+
+	if existing == nil {
+		return ErrPricingNotFound
+	}
+
+	if len(data) == 0 {
+		return ErrInvalidPricing
+	}
+
+	return s.Repo.Update(id, data)
 }
 
 func (s *OrderPricingService) DeleteByOrderID(orderID uint) error {

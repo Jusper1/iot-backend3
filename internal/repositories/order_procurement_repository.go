@@ -1,8 +1,7 @@
 package repositories
 
 import (
-
-		"errors"
+	"errors"
 
 	"gorm.io/gorm"
 
@@ -49,8 +48,34 @@ func (r *OrderProcurementRepository) FindByOrderID(orderID uint) (*models.OrderP
 	return &data, err
 }
 
-func (r *OrderProcurementRepository) Update(data *models.OrderProcurement) error {
-	return r.DB.Save(data).Error
+func (r *OrderProcurementRepository) Update(
+	id uint,
+	data map[string]interface{},
+) error {
+	allowedFields := map[string]bool{
+		"no_po_kut":                             true,
+		"tanggal_invoice_kut":                  true,
+		"nomor_surat_penyampaian_daftar_harga": true,
+		"nomor_formulir_pembelian":             true,
+		"no_invoice_kut":                       true,
+	}
+
+	updates := make(map[string]interface{})
+
+	for field, value := range data {
+		if allowedFields[field] {
+			updates[field] = value
+		}
+	}
+
+	if len(updates) == 0 {
+		return gorm.ErrInvalidData
+	}
+
+	return r.DB.
+		Model(&models.OrderProcurement{}).
+		Where("id = ?", id).
+		Updates(updates).Error
 }
 
 func (r *OrderProcurementRepository) DeleteByOrderID(orderID uint) error {

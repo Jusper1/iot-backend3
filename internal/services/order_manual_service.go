@@ -29,6 +29,10 @@ func (s *OrderManualService) Create(data *models.OrderManual) error {
 	return s.Repo.Create(data)
 }
 
+func (s *OrderManualService) FindAll() ([]models.OrderManual, error) {
+	return s.Repo.FindAll()
+}
+
 func (s *OrderManualService) FindByID(id uint) (*models.OrderManual, error) {
 	if id == 0 {
 		return nil, ErrInvalidManualOrder

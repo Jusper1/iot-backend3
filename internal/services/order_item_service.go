@@ -54,6 +54,10 @@ func (s *OrderItemService) CreateMany(items []models.OrderItem) error {
 	return s.Repo.CreateMany(items)
 }
 
+func (s *OrderItemService) FindAll() ([]models.OrderItem, error) {
+	return s.Repo.FindAll()
+}
+
 func (s *OrderItemService) FindByID(id uint) (*models.OrderItem, error) {
 	if id == 0 {
 		return nil, ErrOrderItemNotFound

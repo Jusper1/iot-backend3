@@ -46,8 +46,43 @@ func (r *OrderPricingRepository) FindByOrderID(orderID uint) (*models.OrderPrici
 	return &pricing, err
 }
 
-func (r *OrderPricingRepository) Update(pricing *models.OrderPricing) error {
-	return r.DB.Save(pricing).Error
+func (r *OrderPricingRepository) Update(
+	id uint,
+	data map[string]interface{},
+) error {
+	allowedFields := map[string]bool{
+		"order_id":                       true,
+		"tipe_timbangan":                true,
+		"harga_produk":                  true,
+		"harga_ppn":                     true,
+		"harga_ongkir_kut":              true,
+		"harga_ppn_ongkir":              true,
+		"total_harga_ongkir":            true,
+		"total_harga_jual":              true,
+		"harga_produk_reseller":         true,
+		"harga_ppn_reseller":            true,
+		"harga_ongkir_reseller":         true,
+		"harga_ppn_ongkir_reseller":     true,
+		"total_harga_ongkir_reseller":   true,
+		"total_harga_reseller":          true,
+	}
+
+	updates := make(map[string]interface{})
+
+	for field, value := range data {
+		if allowedFields[field] {
+			updates[field] = value
+		}
+	}
+
+	if len(updates) == 0 {
+		return gorm.ErrInvalidData
+	}
+
+	return r.DB.
+		Model(&models.OrderPricing{}).
+		Where("id = ?", id).
+		Updates(updates).Error
 }
 
 func (r *OrderPricingRepository) DeleteByOrderID(orderID uint) error {

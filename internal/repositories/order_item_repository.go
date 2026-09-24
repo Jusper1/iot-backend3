@@ -26,6 +26,17 @@ func (r *OrderItemRepository) CreateMany(items []models.OrderItem) error {
 	return r.DB.Create(&items).Error
 }
 
+func (r *OrderItemRepository) FindAll() ([]models.OrderItem, error) {
+	var items []models.OrderItem
+
+	err := r.DB.
+		Preload("Produk").
+		Order("id DESC").
+		Find(&items).Error
+
+	return items, err
+}
+
 func (r *OrderItemRepository) FindByID(id uint) (*models.OrderItem, error) {
 	var item models.OrderItem
 

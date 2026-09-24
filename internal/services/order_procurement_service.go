@@ -46,12 +46,31 @@ func (s *OrderProcurementService) FindByOrderID(orderID uint) (*models.OrderProc
 	return s.Repo.FindByOrderID(orderID)
 }
 
-func (s *OrderProcurementService) Update(data *models.OrderProcurement) error {
-	if data.ID == 0 || data.OrderID == 0 {
+var (
+	ErrProcurementNotFound = errors.New("procurement tidak ditemukan")
+)
+func (s *OrderProcurementService) Update(
+	id uint,
+	data map[string]interface{},
+) error {
+	if id == 0 {
 		return ErrInvalidProcurement
 	}
 
-	return s.Repo.Update(data)
+	existing, err := s.Repo.FindByID(id)
+	if err != nil {
+		return err
+	}
+
+	if existing == nil {
+		return ErrProcurementNotFound
+	}
+
+	if len(data) == 0 {
+		return ErrInvalidProcurement
+	}
+
+	return s.Repo.Update(id, data)
 }
 
 func (s *OrderProcurementService) DeleteByOrderID(orderID uint) error {

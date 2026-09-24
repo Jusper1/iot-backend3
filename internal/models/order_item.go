@@ -7,7 +7,6 @@ type OrderItem struct {
 
 	OrderID  uint `json:"order_id" gorm:"not null"`
 	ProdukID uint `json:"produk_id" gorm:"not null"`
-
 	Qty      int64   `json:"qty" gorm:"not null"`
 	Harga    float64 `json:"harga" gorm:"not null"`
 	PPN      float64 `json:"ppn" gorm:"not null"`

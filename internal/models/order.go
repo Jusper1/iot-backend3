@@ -5,26 +5,22 @@ import "time"
 type Order struct {
 	ID uint `json:"id" gorm:"primaryKey"`
 
-	KodeOrder     string `json:"kode_order" gorm:"not null;uniqueIndex"`
-	JenisOrder    string `json:"jenis_order" gorm:"not null"`
-	KategoriOrder string `json:"kategori_order" gorm:"not null"`
-
-	InstansiID *uint `json:"instansi_id"`
-	PicID      *uint `json:"pic_id"`
-
-	Status     *string `json:"status"`
-	StatusOdoo *string `json:"status_odoo"`
-
-	NSFP             *string `json:"nsfp"`
-	NoBAST           *string `json:"no_bast"`
-	KodeBayar        *string `json:"kode_bayar"`
-	NoInvoiceInaproc *string `json:"no_invoice_inaproc"`
-	Keterangan       *string `json:"keterangan"`
-
-	TanggalPO        *Date   `json:"tanggal_po"`
-	NoPO             *string `json:"no_po"`
-	PeriodeLangganan *string `json:"periode_langganan"`
-	TanggalBAST      *Date   `json:"tanggal_bast"`
+	KodeOrder     		string `json:"kode_order" gorm:"not null;uniqueIndex"`
+	JenisOrder    		string `json:"jenis_order" gorm:"not null"`
+	KategoriOrder 		string `json:"kategori_order" gorm:"not null"`
+	InstansiID 			*uint `json:"instansi_id"`
+	PicID      			*uint `json:"pic_id"`
+	Status     			*string `json:"status"`
+	StatusOdoo 			*string `json:"status_odoo"`
+	NSFP             	*string `json:"nsfp"`
+	NoBAST           	*string `json:"no_bast"`
+	KodeBayar        	*string `json:"kode_bayar"`
+	NoInvoiceInaproc 	*string `json:"no_invoice_inaproc"`
+	Keterangan       	*string `json:"keterangan"`
+	TanggalPO        	*Date   `json:"tanggal_po"`
+	NoPO             	*string `json:"no_po"`
+	PeriodeLangganan 	*string `json:"periode_langganan"`
+	TanggalBAST      	*Date   `json:"tanggal_bast"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

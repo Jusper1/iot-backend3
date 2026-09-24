@@ -104,7 +104,7 @@ func (h *OrderProcurementHandler) Update(c *gin.Context) {
 		return
 	}
 
-	var data models.OrderProcurement
+	var data map[string]interface{}
 
 	if err := c.ShouldBindJSON(&data); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -114,10 +114,25 @@ func (h *OrderProcurementHandler) Update(c *gin.Context) {
 		return
 	}
 
-	data.ID = uint(id)
-
-	if err := h.Service.Update(&data); err != nil {
+	if len(data) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "data update wajib diisi",
+		})
+		return
+	}
+
+	if err := h.Service.Update(uint(id), data); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	result, err := h.Service.FindByID(uint(id))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"message": err.Error(),
 		})
@@ -126,11 +141,10 @@ func (h *OrderProcurementHandler) Update(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "data procurement berhasil diperbarui",
-		"data":    data,
+		"message": "procurement berhasil diperbarui",
+		"data":    result,
 	})
 }
-
 func (h *OrderProcurementHandler) DeleteByOrderID(c *gin.Context) {
 	orderID, err := strconv.ParseUint(c.Param("order_id"), 10, 64)
 	if err != nil {

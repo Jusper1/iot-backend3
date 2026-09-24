@@ -20,6 +20,17 @@ func (r *OrderManualRepository) Create(data *models.OrderManual) error {
 	return r.DB.Create(data).Error
 }
 
+func (r *OrderManualRepository) FindAll() ([]models.OrderManual, error) {
+	var data []models.OrderManual
+
+	err := r.DB.
+		Preload("Order").
+		Order("id DESC").
+		Find(&data).Error
+
+	return data, err
+}
+
 func (r *OrderManualRepository) FindByID(id uint) (*models.OrderManual, error) {
 	var data models.OrderManual
 

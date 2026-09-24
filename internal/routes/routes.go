@@ -166,7 +166,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 
 	// ORDER ITEMS
 
-	// Catatan: OrderItemHandler tidak punya method FindAll, hanya FindByOrderID/FindByID.
+	protected.GET("/order-items", orderItemHandler.FindAll)
 	protected.GET("/order-items/order/:order_id", orderItemHandler.FindByOrderID)
 	protected.GET("/order-items/:id", orderItemHandler.FindByID)
 	protected.POST("/order-items", orderItemHandler.Create)
@@ -175,9 +175,6 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	protected.DELETE("/order-items/:id", orderItemHandler.Delete)
 
 	// INAPROC
-	// (handler hanya punya: Create, FindByID, FindByOrderID, Update, DeleteByOrderID
-	//  -- TIDAK ada FindAll / Delete by id)
-
 	protected.GET("/inaproc/order/:order_id", inaprocHandler.FindByOrderID)
 	protected.GET("/inaproc/:id", inaprocHandler.FindByID)
 	protected.POST("/inaproc", inaprocHandler.Create)
@@ -185,9 +182,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	protected.DELETE("/inaproc/order/:order_id", inaprocHandler.DeleteByOrderID)
 
 	// MANUAL (order_manual)
-	// (handler hanya punya: Create, FindByID, FindByOrderID, Update, DeleteByOrderID
-	//  -- TIDAK ada FindAll / Delete by id)
-
+	protected.GET("/manual", manualHandler.FindAll)
 	protected.GET("/manual/order/:order_id", manualHandler.FindByOrderID)
 	protected.GET("/manual/:id", manualHandler.FindByID)
 	protected.POST("/manual", manualHandler.Create)

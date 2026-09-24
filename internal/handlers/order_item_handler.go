@@ -70,6 +70,22 @@ func (h *OrderItemHandler) CreateMany(c *gin.Context) {
 	})
 }
 
+func (h *OrderItemHandler) FindAll(c *gin.Context) {
+	data, err := h.Service.FindAll()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    data,
+	})
+}
+
 func (h *OrderItemHandler) FindByID(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
