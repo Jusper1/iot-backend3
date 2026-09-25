@@ -44,6 +44,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	iotInaprocRepository := repositories.NewIOTInaprocRepository(db)
 	iotManualRepository := repositories.NewIOTManualRepository(db)
 	timbanganRepository := repositories.NewTimbanganRepository(db)
+	orderExportRepository := repositories.NewOrderExportRepository(db)
 
 	// SERVICE
 	instansiServiceInst := masterService.NewInstansiService(instansiRepository)
@@ -65,6 +66,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	iotInaprocService := services.NewIOTInaprocService(iotInaprocRepository)
 	iotManualService := services.NewIOTManualService(iotManualRepository)
 	timbanganServiceInst := services.NewTimbanganService(timbanganRepository)
+	orderExportServiceInst := services.NewOrderExportService(orderExportRepository)
 
 	// HANDLER
 	instansiHandler := masterHandlers.NewInstansiHandler(instansiServiceInst)
@@ -86,6 +88,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	iotInaprocHandler := handlers.NewIOTInaprocHandler(iotInaprocService)
 	iotManualHandler := handlers.NewIOTManualHandler(iotManualService)
 	timbanganHandler := handlers.NewTimbanganHandler(timbanganServiceInst)
+	orderExportHandler := handlers.NewOrderExportHandler(orderExportServiceInst)
 
 	// PROTECTED ROUTES
 	protected := api.Group("/")
@@ -247,9 +250,6 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	protected.POST("/iot-manual", iotManualHandler.Create)
 	protected.PUT("/iot-manual/:id", iotManualHandler.Update)
 	protected.DELETE("/iot-manual/:id", iotManualHandler.Delete)
-
-	// Option rules
-	protected.GET("/options", handlers.GetDropdownOptions)
 	
 	// Timbangan
 	protected.GET("/timbangan", timbanganHandler.FindAll)
@@ -258,4 +258,10 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
     protected.POST("/timbangan", timbanganHandler.Create)
     protected.PUT("/timbangan/:id", timbanganHandler.Update)
     protected.DELETE("/timbangan/:id", timbanganHandler.Delete)
+
+	// Option rules
+	protected.GET("/options", handlers.GetDropdownOptions)
+	// EXPORT
+	protected.GET("/orders/export", orderExportHandler.Export)
+
 }
