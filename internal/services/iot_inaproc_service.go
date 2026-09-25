@@ -6,6 +6,7 @@ import (
 
 	"iot-backend/internal/models"
 	"iot-backend/internal/repositories"
+	"iot-backend/internal/rules"
 )
 
 type IOTInaprocService struct {
@@ -89,6 +90,16 @@ func (s *IOTInaprocService) CreateFull(
 		}
 	}
 
+	if req.Status != nil && *req.Status != "" && !rules.IsValidStatusPesanan(*req.Status) {
+		return nil, errors.New("status pesanan tidak ada di daftar yang diperbolehkan")
+	}
+	if req.StatusOdoo != nil && *req.StatusOdoo != "" && !rules.IsValidStatusOdoo(*req.StatusOdoo) {
+		return nil, errors.New("status odoo tidak ada di daftar yang diperbolehkan")
+	}
+	if req.KodeBayar != nil && *req.KodeBayar != "" && !rules.IsValidKodeBayar(*req.KodeBayar) {
+		return nil, errors.New("kode bayar tidak ada di daftar yang diperbolehkan")
+	}
+
 	existing, err := s.Repository.FindByKode(req.KodeOrder)
 
 	if err == nil && existing != nil {
@@ -169,6 +180,21 @@ func (s *IOTInaprocService) Update(id uint, data map[string]interface{}) error {
 		return errors.New("kode_order tidak dapat diubah")
 	}
 
+	if raw, touched := data["status"]; touched {
+		if v, ok := raw.(string); ok && v != "" && !rules.IsValidStatusPesanan(v) {
+			return errors.New("status pesanan tidak ada di daftar yang diperbolehkan")
+		}
+	}
+	if raw, touched := data["status_odoo"]; touched {
+		if v, ok := raw.(string); ok && v != "" && !rules.IsValidStatusOdoo(v) {
+			return errors.New("status odoo tidak ada di daftar yang diperbolehkan")
+		}
+	}
+	if raw, touched := data["kode_bayar"]; touched {
+		if v, ok := raw.(string); ok && v != "" && !rules.IsValidKodeBayar(v) {
+			return errors.New("kode bayar tidak ada di daftar yang diperbolehkan")
+		}
+	}
 
 	return s.Repository.Update(id, data)
 }

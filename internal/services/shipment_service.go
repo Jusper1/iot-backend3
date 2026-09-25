@@ -6,20 +6,35 @@ import (
 
 	"iot-backend/internal/models"
 	"iot-backend/internal/repositories"
+	"iot-backend/internal/rules"
 )
 
 var ErrInvalidShipment = errors.New("data pengiriman tidak valid")
 
 type ShipmentService struct {
-	Repo *repositories.ShipmentRepository
+	Repo      *repositories.ShipmentRepository
+	OrderRepo *repositories.OrderRepository 
 }
 
 func NewShipmentService(
 	repo *repositories.ShipmentRepository,
+	orderRepo *repositories.OrderRepository, 
 ) *ShipmentService {
 	return &ShipmentService{
-		Repo: repo,
+		Repo:      repo,
+		OrderRepo: orderRepo,
 	}
+}
+
+func (s *ShipmentService) validateKategori(orderID uint) error {
+	order, err := s.OrderRepo.FindByID(orderID)
+	if err != nil {
+		return err
+	}
+	if order == nil {
+		return ErrInvalidShipment
+	}
+	return rules.ValidateChildEntity(order.KategoriOrder, rules.EntityShipment)
 }
 
 func (s *ShipmentService) Create(data *models.Shipment) error {
@@ -31,9 +46,13 @@ func (s *ShipmentService) Create(data *models.Shipment) error {
 		return ErrInvalidShipment
 	}
 
+	if err := s.validateKategori(data.OrderID); err != nil {
+		return err
+	}
+
 	if data.Resi != nil {
-	resi := strings.TrimSpace(*data.Resi)
-	data.Resi = &resi
+		resi := strings.TrimSpace(*data.Resi)
+		data.Resi = &resi
 	}
 
 	return s.Repo.Create(data)
@@ -68,9 +87,13 @@ func (s *ShipmentService) Update(data *models.Shipment) error {
 		return ErrInvalidShipment
 	}
 
+	if err := s.validateKategori(data.OrderID); err != nil {
+		return err
+	}
+
 	if data.Resi != nil {
-	resi := strings.TrimSpace(*data.Resi)
-	data.Resi = &resi
+		resi := strings.TrimSpace(*data.Resi)
+		data.Resi = &resi
 	}
 
 	return s.Repo.Update(data)

@@ -5,28 +5,53 @@ import (
 
 	"iot-backend/internal/models"
 	"iot-backend/internal/repositories"
+	"iot-backend/internal/rules"
 )
 
 var (
-	ErrPricingNotFound = errors.New("pricing order tidak ditemukan")
-	ErrInvalidPricing  = errors.New("data pricing tidak valid")
+	ErrPricingNotFound         = errors.New("pricing order tidak ditemukan")
+	ErrInvalidPricing          = errors.New("data pricing tidak valid")
+	ErrTipeTimbanganTidakValid = errors.New("tipe timbangan tidak ada di daftar yang diperbolehkan")
 )
 
 type OrderPricingService struct {
-	Repo *repositories.OrderPricingRepository
+	Repo      *repositories.OrderPricingRepository
+	OrderRepo *repositories.OrderRepository 
 }
 
 func NewOrderPricingService(
 	repo *repositories.OrderPricingRepository,
+	orderRepo *repositories.OrderRepository, 
 ) *OrderPricingService {
 	return &OrderPricingService{
-		Repo: repo,
+		Repo:      repo,
+		OrderRepo: orderRepo,
 	}
+}
+
+
+func (s *OrderPricingService) validateKategori(orderID uint) error {
+	order, err := s.OrderRepo.FindByID(orderID)
+	if err != nil {
+		return err
+	}
+	if order == nil {
+		return ErrInvalidPricing
+	}
+	return rules.ValidateChildEntity(order.KategoriOrder, rules.EntityOrderPricing)
 }
 
 func (s *OrderPricingService) Create(data *models.OrderPricing) error {
 	if data.OrderID == 0 {
 		return ErrInvalidPricing
+	}
+
+	if err := s.validateKategori(data.OrderID); err != nil {
+		return err
+	}
+
+	if data.TipeTimbangan != nil && *data.TipeTimbangan != "" && !rules.IsValidTipeTimbangan(*data.TipeTimbangan) {
+		return ErrTipeTimbanganTidakValid
 	}
 
 	return s.Repo.Create(data)
@@ -64,6 +89,16 @@ func (s *OrderPricingService) Update(id uint, data map[string]interface{}) error
 
 	if len(data) == 0 {
 		return ErrInvalidPricing
+	}
+
+	if err := s.validateKategori(existing.OrderID); err != nil {
+		return err
+	}
+
+	if raw, touched := data["tipe_timbangan"]; touched {
+		if value, ok := raw.(string); ok && value != "" && !rules.IsValidTipeTimbangan(value) {
+			return ErrTipeTimbanganTidakValid
+		}
 	}
 
 	return s.Repo.Update(id, data)

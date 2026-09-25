@@ -5,26 +5,59 @@ import (
 
 	"iot-backend/internal/models"
 	"iot-backend/internal/repositories"
+	"iot-backend/internal/rules"
 )
 
-
-var ErrInvalidProcurement = errors.New("data procurement tidak valid")
+var (
+	ErrInvalidProcurement         = errors.New("data procurement tidak valid")
+	ErrProcurementNotFound        = errors.New("procurement tidak ditemukan")
+	ErrProcurementFieldNotAllowed = errors.New("field ini hanya berlaku untuk kategori timbangan/RCW (no_po_kut, nomor_surat_penyampaian_daftar_harga, nomor_formulir_pembelian)")
+)
 
 type OrderProcurementService struct {
-	Repo *repositories.OrderProcurementRepository
+	Repo      *repositories.OrderProcurementRepository
+	OrderRepo *repositories.OrderRepository 
 }
 
 func NewOrderProcurementService(
 	repo *repositories.OrderProcurementRepository,
+	orderRepo *repositories.OrderRepository, 
 ) *OrderProcurementService {
 	return &OrderProcurementService{
-		Repo: repo,
+		Repo:      repo,
+		OrderRepo: orderRepo,
 	}
+}
+
+func (s *OrderProcurementService) validateFields(orderID uint, data *models.OrderProcurement) error {
+	order, err := s.OrderRepo.FindByID(orderID)
+	if err != nil {
+		return err
+	}
+	if order == nil {
+		return ErrInvalidProcurement
+	}
+
+	if data.NoPOKUT != nil && !rules.IsProcurementFieldAllowed(order.KategoriOrder, "no_po_kut") {
+		return ErrProcurementFieldNotAllowed
+	}
+	if data.NomorSuratPenyampaianDaftarHarga != nil && !rules.IsProcurementFieldAllowed(order.KategoriOrder, "nomor_surat_penyampaian_daftar_harga") {
+		return ErrProcurementFieldNotAllowed
+	}
+	if data.NomorFormulirPembelian != nil && !rules.IsProcurementFieldAllowed(order.KategoriOrder, "nomor_formulir_pembelian") {
+		return ErrProcurementFieldNotAllowed
+	}
+
+	return nil
 }
 
 func (s *OrderProcurementService) Create(data *models.OrderProcurement) error {
 	if data.OrderID == 0 {
 		return ErrInvalidProcurement
+	}
+
+	if err := s.validateFields(data.OrderID, data); err != nil {
+		return err
 	}
 
 	return s.Repo.Create(data)
@@ -46,9 +79,6 @@ func (s *OrderProcurementService) FindByOrderID(orderID uint) (*models.OrderProc
 	return s.Repo.FindByOrderID(orderID)
 }
 
-var (
-	ErrProcurementNotFound = errors.New("procurement tidak ditemukan")
-)
 func (s *OrderProcurementService) Update(
 	id uint,
 	data map[string]interface{},
@@ -68,6 +98,25 @@ func (s *OrderProcurementService) Update(
 
 	if len(data) == 0 {
 		return ErrInvalidProcurement
+	}
+
+	order, err := s.OrderRepo.FindByID(existing.OrderID)
+	if err != nil {
+		return err
+	}
+	if order == nil {
+		return ErrInvalidProcurement
+	}
+
+	restrictedFields := []string{
+		"no_po_kut",
+		"nomor_surat_penyampaian_daftar_harga",
+		"nomor_formulir_pembelian",
+	}
+	for _, field := range restrictedFields {
+		if _, touched := data[field]; touched && !rules.IsProcurementFieldAllowed(order.KategoriOrder, field) {
+			return ErrProcurementFieldNotAllowed
+		}
 	}
 
 	return s.Repo.Update(id, data)

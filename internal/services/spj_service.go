@@ -6,11 +6,14 @@ import (
 
 	"iot-backend/internal/models"
 	"iot-backend/internal/repositories"
+	"iot-backend/internal/rules"
 )
 
 var (
-	ErrInvalidSPJ = errors.New("data SPJ tidak valid")
-	ErrSPJNotFound = errors.New("SPJ tidak ditemukan")
+	ErrInvalidSPJ           = errors.New("data SPJ tidak valid")
+	ErrSPJNotFound          = errors.New("SPJ tidak ditemukan")
+	ErrJenisKertasTidakValid = errors.New("jenis kertas harus salah satu dari: A4, F4")
+	ErrJenisFileTidakValid   = errors.New("jenis file tidak ada di daftar yang diperbolehkan")
 )
 
 type SPJService struct {
@@ -25,6 +28,16 @@ func NewSPJService(
 	}
 }
 
+func (s *SPJService) validateDropdowns(data *models.SPJ) error {
+	if data.JenisKertas != nil && *data.JenisKertas != "" && !rules.IsValidJenisKertas(*data.JenisKertas) {
+		return ErrJenisKertasTidakValid
+	}
+	if data.JenisFile != nil && *data.JenisFile != "" && !rules.IsValidJenisFile(*data.JenisFile) {
+		return ErrJenisFileTidakValid
+	}
+	return nil
+}
+
 func (s *SPJService) Create(data *models.SPJ) error {
 	if data.OrderID == 0 {
 		return ErrInvalidSPJ
@@ -34,30 +47,34 @@ func (s *SPJService) Create(data *models.SPJ) error {
 		return ErrInvalidSPJ
 	}
 
-if data.KebutuhanSPJ != nil {
-	value := strings.TrimSpace(*data.KebutuhanSPJ)
-	data.KebutuhanSPJ = &value
-}
+	if err := s.validateDropdowns(data); err != nil {
+		return err
+	}
 
-if data.JenisKertas != nil {
-	value := strings.TrimSpace(*data.JenisKertas)
-	data.JenisKertas = &value
-}
+	if data.KebutuhanSPJ != nil {
+		value := strings.TrimSpace(*data.KebutuhanSPJ)
+		data.KebutuhanSPJ = &value
+	}
 
-if data.JenisFile != nil {
-	value := strings.TrimSpace(*data.JenisFile)
-	data.JenisFile = &value
-}
+	if data.JenisKertas != nil {
+		value := strings.TrimSpace(*data.JenisKertas)
+		data.JenisKertas = &value
+	}
 
-if data.PICPrint != nil {
-	value := strings.TrimSpace(*data.PICPrint)
-	data.PICPrint = &value
-}
+	if data.JenisFile != nil {
+		value := strings.TrimSpace(*data.JenisFile)
+		data.JenisFile = &value
+	}
 
-if data.Status != nil {
-	value := strings.TrimSpace(*data.Status)
-	data.Status = &value
-}
+	if data.PICPrint != nil {
+		value := strings.TrimSpace(*data.PICPrint)
+		data.PICPrint = &value
+	}
+
+	if data.Status != nil {
+		value := strings.TrimSpace(*data.Status)
+		data.Status = &value
+	}
 
 	return s.Repo.Create(data)
 }
@@ -100,30 +117,34 @@ func (s *SPJService) Update(data *models.SPJ) error {
 		return ErrInvalidSPJ
 	}
 
+	if err := s.validateDropdowns(data); err != nil {
+		return err
+	}
+
 	if data.KebutuhanSPJ != nil {
-	value := strings.TrimSpace(*data.KebutuhanSPJ)
-	data.KebutuhanSPJ = &value
-}
+		value := strings.TrimSpace(*data.KebutuhanSPJ)
+		data.KebutuhanSPJ = &value
+	}
 
-if data.JenisKertas != nil {
-	value := strings.TrimSpace(*data.JenisKertas)
-	data.JenisKertas = &value
-}
+	if data.JenisKertas != nil {
+		value := strings.TrimSpace(*data.JenisKertas)
+		data.JenisKertas = &value
+	}
 
-if data.JenisFile != nil {
-	value := strings.TrimSpace(*data.JenisFile)
-	data.JenisFile = &value
-}
+	if data.JenisFile != nil {
+		value := strings.TrimSpace(*data.JenisFile)
+		data.JenisFile = &value
+	}
 
-if data.PICPrint != nil {
-	value := strings.TrimSpace(*data.PICPrint)
-	data.PICPrint = &value
-}
+	if data.PICPrint != nil {
+		value := strings.TrimSpace(*data.PICPrint)
+		data.PICPrint = &value
+	}
 
-if data.Status != nil {
-	value := strings.TrimSpace(*data.Status)
-	data.Status = &value
-}
+	if data.Status != nil {
+		value := strings.TrimSpace(*data.Status)
+		data.Status = &value
+	}
 
 	return s.Repo.Update(data)
 }

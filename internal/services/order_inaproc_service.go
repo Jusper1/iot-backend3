@@ -7,7 +7,7 @@ import (
 	"iot-backend/internal/repositories"
 )
 
-var ErrInvalidInaproc = errors.New("data order inaproc tidak valid")
+var ErrInvalidInaproc = errors.New("data order inaproc tidak valid (CATATAN: entitas ini deprecated, gunakan orders.no_invoice_inaproc)")
 
 type OrderInaprocService struct {
 	Repo *repositories.OrderInaprocRepository

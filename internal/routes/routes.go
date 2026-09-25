@@ -21,19 +21,15 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	api := r.Group("/api")
 
 	// PUBLIC ROUTES
-
-
 	api.POST("/register", handlers.Register)
 	api.POST("/login", handlers.Login)
 
 	// REPOSITORY
-
 	instansiRepository := masterRepo.NewInstansiRepository(db)
 	picRepository := masterRepo.NewPICRepository(db)
 	produkRepository := masterRepo.NewProdukRepository(db)
 	wilayahRepository := masterRepo.NewWilayahRepository(db)
 	ekspedisiRepository := masterRepo.NewEkspedisiRepository(db)
-
 	orderRepository := repositories.NewOrderRepository(db)
 	orderItemRepository := repositories.NewOrderItemRepository(db)
 	inaprocRepository := repositories.NewOrderInaprocRepository(db)
@@ -47,37 +43,35 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	shipmentRepository := repositories.NewShipmentRepository(db)
 	iotInaprocRepository := repositories.NewIOTInaprocRepository(db)
 	iotManualRepository := repositories.NewIOTManualRepository(db)
+	timbanganRepository := repositories.NewTimbanganRepository(db)
 
 	// SERVICE
-
 	instansiServiceInst := masterService.NewInstansiService(instansiRepository)
 	picServiceInst := masterService.NewPICService(picRepository)
 	produkServiceInst := masterService.NewProdukService(produkRepository)
 	wilayahServiceInst := masterService.NewWilayahService(wilayahRepository)
 	ekspedisiServiceInst := masterService.NewEkspedisiService(ekspedisiRepository)
-
 	orderServiceInst := services.NewOrderService(orderRepository)
 	orderItemServiceInst := services.NewOrderItemService(orderItemRepository)
 	inaprocServiceInst := services.NewOrderInaprocService(inaprocRepository)
-	manualServiceInst := services.NewOrderManualService(manualRepository)
-	procurementServiceInst := services.NewOrderProcurementService(procurementRepository)
-	pricingServiceInst := services.NewOrderPricingService(pricingRepository)
+	manualServiceInst := services.NewOrderManualService(manualRepository, orderRepository)
+	procurementServiceInst := services.NewOrderProcurementService(procurementRepository, orderRepository)
+	pricingServiceInst := services.NewOrderPricingService(pricingRepository, orderRepository)
+	shipmentServiceInst := services.NewShipmentService(shipmentRepository, orderRepository)
 	orderDocumentServiceInst := services.NewOrderDocumentService(orderDocumentRepository)
 	paymentServiceInst := services.NewPaymentService(paymentRepository)
 	spjServiceInst := services.NewSPJService(spjRepository)
 	documentServiceInst := services.NewDocumentService(documentRepository)
-	shipmentServiceInst := services.NewShipmentService(shipmentRepository)
 	iotInaprocService := services.NewIOTInaprocService(iotInaprocRepository)
 	iotManualService := services.NewIOTManualService(iotManualRepository)
+	timbanganServiceInst := services.NewTimbanganService(timbanganRepository)
 
 	// HANDLER
-
 	instansiHandler := masterHandlers.NewInstansiHandler(instansiServiceInst)
 	picHandler := masterHandlers.NewPICHandler(picServiceInst)
 	produkHandler := masterHandlers.NewProdukHandler(produkServiceInst)
 	wilayahHandler := masterHandlers.NewWilayahHandler(wilayahServiceInst)
 	ekspedisiHandler := masterHandlers.NewEkspedisiHandler(ekspedisiServiceInst)
-
 	orderHandler := handlers.NewOrderHandler(orderServiceInst)
 	orderItemHandler := handlers.NewOrderItemHandler(orderItemServiceInst)
 	inaprocHandler := handlers.NewOrderInaprocHandler(inaprocServiceInst)
@@ -91,14 +85,13 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	shipmentHandler := handlers.NewShipmentHandler(shipmentServiceInst)
 	iotInaprocHandler := handlers.NewIOTInaprocHandler(iotInaprocService)
 	iotManualHandler := handlers.NewIOTManualHandler(iotManualService)
+	timbanganHandler := handlers.NewTimbanganHandler(timbanganServiceInst)
 
 	// PROTECTED ROUTES
-
 	protected := api.Group("/")
 	protected.Use(middleware.JWTAuth())
 
 	// PROFILE
-
 	protected.GET("/profile", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
@@ -113,16 +106,14 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	})
 
 	// MASTER INSTANSI
-
 	protected.GET("/instansi", instansiHandler.FindAll)
-	protected.GET("/instansi/search", instansiHandler.Search) // static route, taruh sebelum /:id
+	protected.GET("/instansi/search", instansiHandler.Search) 
 	protected.GET("/instansi/:id", instansiHandler.FindByID)
 	protected.POST("/instansi", instansiHandler.Create)
 	protected.PUT("/instansi/:id", instansiHandler.Update)
 	protected.DELETE("/instansi/:id", instansiHandler.Delete)
 
 	// MASTER PIC
-
 	protected.GET("/pic", picHandler.FindAll)
 	protected.GET("/pic/instansi/:instansi_id", picHandler.FindByInstansiID)
 	protected.GET("/pic/:id", picHandler.FindByID)
@@ -131,7 +122,6 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	protected.DELETE("/pic/:id", picHandler.Delete)
 
 	// MASTER PRODUK
-
 	protected.GET("/produk", produkHandler.FindAll)
 	protected.GET("/produk/active", produkHandler.FindActive)
 	protected.GET("/produk/kode/:kode", produkHandler.FindByKode)
@@ -141,7 +131,6 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	protected.DELETE("/produk/:id", produkHandler.Delete)
 
 	// MASTER WILAYAH
-
 	protected.GET("/wilayah", wilayahHandler.FindAll)
 	protected.GET("/wilayah/provinsi/:provinsi", wilayahHandler.FindByProvinsi)
 	protected.GET("/wilayah/:id", wilayahHandler.FindByID)
@@ -150,7 +139,6 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	protected.DELETE("/wilayah/:id", wilayahHandler.Delete)
 
 	// MASTER EKSPEDISI
-
 	protected.GET("/ekspedisi", ekspedisiHandler.FindAll)
 	protected.GET("/ekspedisi/active", ekspedisiHandler.FindActive)
 	protected.GET("/ekspedisi/:id", ekspedisiHandler.FindByID)
@@ -159,7 +147,6 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	protected.DELETE("/ekspedisi/:id", ekspedisiHandler.Delete)
 
 	// ORDERS
-
 	protected.GET("/orders", orderHandler.FindAll)
 	protected.GET("/orders/kode/:kode", orderHandler.FindByKode)
 	protected.GET("/orders/:id", orderHandler.FindByID)
@@ -168,7 +155,6 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	protected.DELETE("/orders/:id", orderHandler.Delete)
 
 	// ORDER ITEMS
-
 	protected.GET("/order-items", orderItemHandler.FindAll)
 	protected.GET("/order-items/order/:order_id", orderItemHandler.FindByOrderID)
 	protected.GET("/order-items/:id", orderItemHandler.FindByID)
@@ -192,28 +178,21 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	protected.PUT("/manual/:id", manualHandler.Update)
 	protected.DELETE("/manual/order/:order_id", manualHandler.DeleteByOrderID)
 
-	// ORDER PROCUREMENT (sebelumnya belum ada di router)
-	// (Create, FindByID, FindByOrderID, Update, DeleteByOrderID)
-
+	// ORDER PROCUREMENT 
 	protected.GET("/order-procurement/order/:order_id", procurementHandler.FindByOrderID)
 	protected.GET("/order-procurement/:id", procurementHandler.FindByID)
 	protected.POST("/order-procurement", procurementHandler.Create)
 	protected.PUT("/order-procurement/:id", procurementHandler.Update)
 	protected.DELETE("/order-procurement/order/:order_id", procurementHandler.DeleteByOrderID)
 
-	// ORDER PRICING (sebelumnya belum ada di router)
-	// (Create, FindByID, FindByOrderID, Update, DeleteByOrderID)
-
+	// ORDER PRICING
 	protected.GET("/order-pricing/order/:order_id", pricingHandler.FindByOrderID)
 	protected.GET("/order-pricing/:id", pricingHandler.FindByID)
 	protected.POST("/order-pricing", pricingHandler.Create)
 	protected.PUT("/order-pricing/:id", pricingHandler.Update)
 	protected.DELETE("/order-pricing/order/:order_id", pricingHandler.DeleteByOrderID)
 
-	// ORDER DOCUMENT (sebelumnya belum ada di router)
-	// beda dengan DOCUMENTS di bawah -- ini dokumen bawaan order
-	// (Create, FindByID, FindByOrderID, Update, Delete)
-
+	// ORDER DOCUMENT
 	protected.GET("/order-documents/order/:order_id", orderDocumentHandler.FindByOrderID)
 	protected.GET("/order-documents/:id", orderDocumentHandler.FindByID)
 	protected.POST("/order-documents", orderDocumentHandler.Create)
@@ -221,7 +200,6 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	protected.DELETE("/order-documents/:id", orderDocumentHandler.Delete)
 
 	// PAYMENTS
-
 	protected.GET("/payments", paymentHandler.FindAll)
 	protected.GET("/payments/order/:order_id", paymentHandler.FindByOrderID)
 	protected.GET("/payments/:id", paymentHandler.FindByID)
@@ -229,9 +207,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	protected.PUT("/payments/:id", paymentHandler.Update)
 	protected.DELETE("/payments/:id", paymentHandler.Delete)
 
-	// SHIPMENT / PENGIRIMAN (sebelumnya belum ada di router)
-	// beda dengan master EKSPEDISI di atas
-
+	// SHIPMENT / PENGIRIMAN 
 	protected.GET("/shipments", shipmentHandler.FindAll)
 	protected.GET("/shipments/order/:order_id", shipmentHandler.FindByOrderID)
 	protected.GET("/shipments/:id", shipmentHandler.FindByID)
@@ -240,7 +216,6 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	protected.DELETE("/shipments/:id", shipmentHandler.Delete)
 
 	// SPJ
-
 	protected.GET("/spj", spjHandler.FindAll)
 	protected.GET("/spj/order/:order_id", spjHandler.FindByOrderID)
 	protected.GET("/spj/:id", spjHandler.FindByID)
@@ -248,8 +223,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	protected.PUT("/spj/:id", spjHandler.Update)
 	protected.DELETE("/spj/:id", spjHandler.Delete)
 
-	// DOCUMENTS (dokumen umum, bisa terkait order ATAU spj)
-
+	// DOCUMENTS
 	protected.GET("/documents", documentHandler.FindAll)
 	protected.GET("/documents/order/:order_id", documentHandler.FindByOrderID)
 	protected.GET("/documents/spj/:spj_id", documentHandler.FindBySPJID)
@@ -258,6 +232,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	protected.PUT("/documents/:id", documentHandler.Update)
 	protected.DELETE("/documents/:id", documentHandler.Delete)
 
+	//IOT-INAPROC
 	protected.GET("/iot-inaproc", iotInaprocHandler.FindAll)
 	protected.GET("/iot-inaproc/kode/:kode", iotInaprocHandler.FindByKode)
 	protected.GET("/iot-inaproc/:id", iotInaprocHandler.FindByID)
@@ -265,10 +240,22 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	protected.PUT("/iot-inaproc/:id", iotInaprocHandler.Update)
 	protected.DELETE("/iot-inaproc/:id", iotInaprocHandler.Delete)
 
+	// IOT-MANUAL
 	protected.GET("/iot-manual", iotManualHandler.FindAll)
 	protected.GET("/iot-manual/:id", iotManualHandler.FindByID)
 	protected.GET("/iot-manual/kode/:kode", iotManualHandler.FindByKode)
 	protected.POST("/iot-manual", iotManualHandler.Create)
 	protected.PUT("/iot-manual/:id", iotManualHandler.Update)
 	protected.DELETE("/iot-manual/:id", iotManualHandler.Delete)
+
+	// Option rules
+	protected.GET("/options", handlers.GetDropdownOptions)
+	
+	// Timbangan
+	protected.GET("/timbangan", timbanganHandler.FindAll)
+    protected.GET("/timbangan/:id", timbanganHandler.FindByID)
+    protected.GET("/timbangan/kode/:kode", timbanganHandler.FindByKode)
+    protected.POST("/timbangan", timbanganHandler.Create)
+    protected.PUT("/timbangan/:id", timbanganHandler.Update)
+    protected.DELETE("/timbangan/:id", timbanganHandler.Delete)
 }

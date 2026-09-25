@@ -49,12 +49,10 @@ func main() {
 	}))
 
 	// ROUTES
-
-
 	routes.SetupRoutes(r, config.DB)
 
 	// SERVER
-	
+
 	port := os.Getenv("APP_PORT")
 
 	if port == "" {

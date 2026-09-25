@@ -8,12 +8,17 @@ import (
 
 	"iot-backend/internal/models"
 	"iot-backend/internal/repositories"
+	"iot-backend/internal/rules"
 )
 
 var (
 	ErrKodeOrderRequired = errors.New("kode order wajib diisi")
 	ErrKodeOrderExists   = errors.New("kode order sudah digunakan")
 	ErrOrderNotFound     = errors.New("order tidak ditemukan")
+	ErrKategoriTidakValid   = errors.New("kategori_order tidak dikenal, harus salah satu dari: iot_inaproc, iot_manual, timbangan_inaproc, timbangan_manual, rcw_360, rcw_800w")
+	ErrStatusTidakValid     = errors.New("status pesanan tidak ada di daftar yang diperbolehkan")
+	ErrStatusOdooTidakValid = errors.New("status odoo tidak ada di daftar yang diperbolehkan")
+	ErrKodeBayarTidakValid  = errors.New("kode bayar tidak ada di daftar yang diperbolehkan")
 )
 
 type OrderService struct {
@@ -33,6 +38,20 @@ func (s *OrderService) Create(order *models.Order) error {
 
 	if order.KodeOrder == "" {
 		return ErrKodeOrderRequired
+	}
+
+	if !rules.IsKategoriValid(order.KategoriOrder) {
+		return ErrKategoriTidakValid
+	}
+
+	if order.Status != nil && *order.Status != "" && !rules.IsValidStatusPesanan(*order.Status) {
+		return ErrStatusTidakValid
+	}
+	if order.StatusOdoo != nil && *order.StatusOdoo != "" && !rules.IsValidStatusOdoo(*order.StatusOdoo) {
+		return ErrStatusOdooTidakValid
+	}
+	if order.KodeBayar != nil && *order.KodeBayar != "" && !rules.IsValidKodeBayar(*order.KodeBayar) {
+		return ErrKodeBayarTidakValid
 	}
 
 	exists, err := s.OrderRepo.ExistsByKode(order.KodeOrder)
@@ -96,6 +115,19 @@ func (s *OrderService) Update(order *models.Order) error {
 
 	if order.KodeOrder == "" {
 		return ErrKodeOrderRequired
+	}
+
+	if !rules.IsKategoriValid(order.KategoriOrder) {
+		return ErrKategoriTidakValid
+	}
+	if order.Status != nil && *order.Status != "" && !rules.IsValidStatusPesanan(*order.Status) {
+		return ErrStatusTidakValid
+	}
+	if order.StatusOdoo != nil && *order.StatusOdoo != "" && !rules.IsValidStatusOdoo(*order.StatusOdoo) {
+		return ErrStatusOdooTidakValid
+	}
+	if order.KodeBayar != nil && *order.KodeBayar != "" && !rules.IsValidKodeBayar(*order.KodeBayar) {
+		return ErrKodeBayarTidakValid
 	}
 
 	existing, err := s.OrderRepo.FindByKode(order.KodeOrder)
