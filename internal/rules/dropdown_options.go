@@ -1,17 +1,20 @@
 package rules
 
-
 var JenisKertasOptions = []string{
 	"A4",
 	"F4",
 }
 
 var TipeTimbanganOptions = []string{
-	"Digital 150 Kg",
+	"1 KG",
+	"3 KG",
+	"13 KG",
+	"31 KG",
 }
 
 var KodeBayarOptions = []string{
-	"KB-001",
+	"UP",
+	"LS",
 }
 
 var StatusPesananOptions = []string{
@@ -32,7 +35,6 @@ var JenisFileOptions = []string{
 	"PDF",
 }
 
-
 func contains(list []string, value string) bool {
 	for _, v := range list {
 		if v == value {
@@ -42,9 +44,9 @@ func contains(list []string, value string) bool {
 	return false
 }
 
-func IsValidJenisKertas(value string) bool    { return contains(JenisKertasOptions, value) }
-func IsValidTipeTimbangan(value string) bool  { return contains(TipeTimbanganOptions, value) }
-func IsValidKodeBayar(value string) bool      { return contains(KodeBayarOptions, value) }
-func IsValidStatusPesanan(value string) bool  { return contains(StatusPesananOptions, value) }
-func IsValidStatusOdoo(value string) bool     { return contains(StatusOdooOptions, value) }
-func IsValidJenisFile(value string) bool      { return contains(JenisFileOptions, value) }
+func IsValidJenisKertas(value string) bool   { return contains(JenisKertasOptions, value) }
+func IsValidTipeTimbangan(value string) bool { return contains(TipeTimbanganOptions, value) }
+func IsValidKodeBayar(value string) bool     { return contains(KodeBayarOptions, value) }
+func IsValidStatusPesanan(value string) bool { return contains(StatusPesananOptions, value) }
+func IsValidStatusOdoo(value string) bool    { return contains(StatusOdooOptions, value) }
+func IsValidJenisFile(value string) bool     { return contains(JenisFileOptions, value) }

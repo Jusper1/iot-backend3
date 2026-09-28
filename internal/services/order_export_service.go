@@ -1,13 +1,13 @@
 package services
 
 import (
-	// "bytes"
 	"fmt"
 
 	"github.com/xuri/excelize/v2"
 
 	"iot-backend/internal/models"
 	"iot-backend/internal/repositories"
+	"iot-backend/internal/rules"
 )
 
 type OrderExportService struct {
@@ -22,60 +22,316 @@ func NewOrderExportService(
 	}
 }
 
-var exportHeaders = []string{
-	"Kode Pemesanan",
-	"Kategori",
-	"Nama Instansi",
-	"Nama PIC",
-	"No Telp PIC",
-	"Email",
-	"NIK",
-	"No NPWP",
-	"Alamat",
-	"Kota/Kab",
-	"Provinsi",
-	"Quantity",
-	"Harga + PPN",
-	"Periode Berlangganan",
-	"Status Pesanan",
-	"Status Odoo",
-	"Bulan Pengiriman SPH",
-	"No. Surat Penawaran Harga",
-	"No. Surat Penyampaian Daftar Harga",
-	"No. Formulir Pembelian",
-	"No. Formulir Berlangganan",
-	"No. Kontrak Berlangganan",
-	"No. PO KUT",
-	"Tanggal Pesanan (PO)",
-	"Tanggal BAST",
-	"No. BAST",
-	"No. Invoice KUT",
-	"Tanggal Invoice KUT",
-	"No. Invoice Inaproc",
-	"NSFP",
-	"Tanggal Uang Masuk",
-	"Jumlah Uang Masuk",
-	"Rekening Penerima",
-	"Kode Bayar",
-	"Keterangan",
-	"Tipe Timbangan",
-	"Harga Produk",
-	"Harga PPN",
-	"Harga Ongkir KUT",
-	"Harga PPN 11% Ongkir",
-	"Total Harga + Ongkir",
-	"Total Harga Jual",
-	"Wilayah Pengiriman",
-	"Berat (Kg)",
-	"Harga Produk Reseller",
-	"Harga PPN Reseller",
-	"Harga Ongkir Reseller",
-	"Harga PPN Ongkir Reseller",
-	"Total Harga + Ongkir Reseller",
-	"Total Harga Reseller",
-	"Nama Ekspedisi",
-	"Resi",
-	"Tanggal Barang Diterima",
+type exportColumn struct {
+	Header   string
+	Kategori []string
+	Value    func(o *models.Order) interface{}
+}
+
+
+var (
+	katAll = rules.AllKategori
+
+	katExceptIotInaproc = []string{
+		rules.KategoriIoTManual,
+		rules.KategoriTimbanganInaproc, rules.KategoriTimbanganManual,
+		rules.KategoriRCW360, rules.KategoriRCW800W,
+	}
+
+	katExceptIotManual = []string{
+		rules.KategoriIoTInaproc,
+		rules.KategoriTimbanganInaproc, rules.KategoriTimbanganManual,
+		rules.KategoriRCW360, rules.KategoriRCW800W,
+	}
+
+	katLangganan = []string{rules.KategoriIoTInaproc, rules.KategoriIoTManual}
+	katIoTManual = []string{rules.KategoriIoTManual}
+
+	katTimbanganRCW = []string{
+		rules.KategoriTimbanganInaproc, rules.KategoriTimbanganManual,
+		rules.KategoriRCW360, rules.KategoriRCW800W,
+	}
+)
+
+
+func strVal(v *string) string {
+	if v == nil {
+		return ""
+	}
+	return *v
+}
+
+func dateVal(v *models.Date) string {
+	if v == nil {
+		return ""
+	}
+	return string(*v)
+}
+
+func firstPayment(o *models.Order) *models.Payment {
+	if len(o.Payments) == 0 {
+		return nil
+	}
+	return &o.Payments[0]
+}
+
+func firstShipment(o *models.Order) *models.Shipment {
+	if len(o.Shipments) == 0 {
+		return nil
+	}
+	return &o.Shipments[0]
+}
+
+
+var exportColumns = []exportColumn{
+	{"Kode Pemesanan", katAll, func(o *models.Order) interface{} { return o.KodeOrder }},
+	{"Kategori", katAll, func(o *models.Order) interface{} { return o.KategoriOrder }},
+	{"Nama Instansi/Perusahaan", katAll, func(o *models.Order) interface{} {
+		if o.Instansi == nil {
+			return ""
+		}
+		return o.Instansi.NamaInstansi
+	}},
+	{"Nama PIC", katAll, func(o *models.Order) interface{} {
+		if o.PIC == nil {
+			return ""
+		}
+		return o.PIC.NamaPIC
+	}},
+	{"Nomor Telepon PIC", katAll, func(o *models.Order) interface{} {
+		if o.PIC == nil {
+			return ""
+		}
+		return strVal(o.PIC.NoHP)
+	}},
+	{"Email", katExceptIotInaproc, func(o *models.Order) interface{} {
+		if o.PIC == nil {
+			return ""
+		}
+		return strVal(o.PIC.Email)
+	}},
+	{"NIK", katAll, func(o *models.Order) interface{} {
+		if o.PIC == nil {
+			return ""
+		}
+		return strVal(o.PIC.NIK)
+	}},
+	{"No NPWP", katAll, func(o *models.Order) interface{} {
+		if o.Instansi == nil {
+			return ""
+		}
+		return strVal(o.Instansi.NPWP)
+	}},
+	{"Quantity", katAll, func(o *models.Order) interface{} {
+		if len(o.Items) == 0 {
+			return ""
+		}
+		var total int64
+		for _, it := range o.Items {
+			total += it.Qty
+		}
+		return total
+	}},
+	{"Harga + PPN", katAll, func(o *models.Order) interface{} {
+		if len(o.Items) == 0 {
+			return ""
+		}
+		var total float64
+		for _, it := range o.Items {
+			total += it.Subtotal
+		}
+		return total
+	}},
+	{"Periode Berlangganan", katLangganan, func(o *models.Order) interface{} { return strVal(o.PeriodeLangganan) }},
+	{"Status Pesanan", katAll, func(o *models.Order) interface{} { return strVal(o.Status) }},
+	{"Status Odoo", katAll, func(o *models.Order) interface{} { return strVal(o.StatusOdoo) }},
+
+	{"Bulan Pengiriman SPH", katIoTManual, func(o *models.Order) interface{} {
+		if o.Manual == nil {
+			return ""
+		}
+		return strVal(o.Manual.BulanPengirimanSPH)
+	}},
+	{"Nomor Surat Penawaran Harga", katIoTManual, func(o *models.Order) interface{} {
+		if o.Manual == nil {
+			return ""
+		}
+		return strVal(o.Manual.NomorSuratPenawaranHarga)
+	}},
+	{"Nomor Surat Penyampaian Daftar Harga", katTimbanganRCW, func(o *models.Order) interface{} {
+		if o.Procurement == nil {
+			return ""
+		}
+		return strVal(o.Procurement.NomorSuratPenyampaianDaftarHarga)
+	}},
+	{"Nomor Formulir Pembelian", katTimbanganRCW, func(o *models.Order) interface{} {
+		if o.Procurement == nil {
+			return ""
+		}
+		return strVal(o.Procurement.NomorFormulirPembelian)
+	}},
+	{"Nomor Formulir Berlangganan", katIoTManual, func(o *models.Order) interface{} {
+		if o.Manual == nil {
+			return ""
+		}
+		return strVal(o.Manual.NomorFormulirBerlangganan)
+	}},
+	{"Nomor Kontrak Berlangganan", katIoTManual, func(o *models.Order) interface{} {
+		if o.Manual == nil {
+			return ""
+		}
+		return strVal(o.Manual.NomorKontrakBerlangganan)
+	}},
+	{"Nomor PO KUT", katTimbanganRCW, func(o *models.Order) interface{} {
+		if o.Procurement == nil {
+			return ""
+		}
+		return strVal(o.Procurement.NoPOKUT)
+	}},
+
+	{"Tanggal Pesanan (PO)", katAll, func(o *models.Order) interface{} { return dateVal(o.TanggalPO) }},
+	{"Tanggal BAST", katAll, func(o *models.Order) interface{} { return dateVal(o.TanggalBAST) }},
+	{"Nomor BAST", katAll, func(o *models.Order) interface{} { return strVal(o.NoBAST) }},
+	{"Nomor Invoice KUT", katAll, func(o *models.Order) interface{} {
+		if o.Procurement == nil {
+			return ""
+		}
+		return strVal(o.Procurement.NoInvoiceKUT)
+	}},
+	{"Tanggal Invoice KUT", katAll, func(o *models.Order) interface{} {
+		if o.Procurement == nil {
+			return ""
+		}
+		return dateVal(o.Procurement.TanggalInvoiceKUT)
+	}},
+	{"Nomor Invoice Inaproc", katExceptIotManual, func(o *models.Order) interface{} { return strVal(o.NoInvoiceInaproc) }},
+	{"NSFP", katAll, func(o *models.Order) interface{} { return strVal(o.NSFP) }},
+
+	{"Tanggal Uang Masuk", katAll, func(o *models.Order) interface{} {
+		if p := firstPayment(o); p != nil {
+			return dateVal(p.TanggalUangMasuk)
+		}
+		return ""
+	}},
+	{"Jumlah Uang Masuk", katAll, func(o *models.Order) interface{} {
+		if p := firstPayment(o); p != nil {
+			return p.JumlahUangMasuk
+		}
+		return ""
+	}},
+	{"Rekening Penerima", katAll, func(o *models.Order) interface{} {
+		if p := firstPayment(o); p != nil {
+			return strVal(p.Rekening)
+		}
+		return ""
+	}},
+
+	{"Kode Bayar", katExceptIotManual, func(o *models.Order) interface{} { return strVal(o.KodeBayar) }},
+	{"Keterangan", katAll, func(o *models.Order) interface{} { return strVal(o.Keterangan) }},
+
+	{"Alamat", katAll, func(o *models.Order) interface{} {
+		if o.Instansi == nil {
+			return ""
+		}
+		return strVal(o.Instansi.Alamat)
+	}},
+	{"Kota/Kab", katAll, func(o *models.Order) interface{} {
+		if o.Instansi == nil {
+			return ""
+		}
+		return strVal(o.Instansi.KotaKab)
+	}},
+	{"Provinsi", katAll, func(o *models.Order) interface{} {
+		if o.Instansi == nil {
+			return ""
+		}
+		return strVal(o.Instansi.Provinsi)
+	}},
+
+
+	{"Tipe Timbangan", katTimbanganRCW, func(o *models.Order) interface{} {
+		if o.Pricing == nil {
+			return ""
+		}
+		return strVal(o.Pricing.TipeTimbangan)
+	}},
+	{"Harga Produk", katTimbanganRCW, pricingVal(func(p *models.OrderPricing) float64 { return p.HargaProduk })},
+	{"Harga PPN", katTimbanganRCW, pricingVal(func(p *models.OrderPricing) float64 { return p.HargaPPN })},
+	{"Harga Ongkir KUT", katTimbanganRCW, pricingVal(func(p *models.OrderPricing) float64 { return p.HargaOngkirKUT })},
+	{"Harga PPN 11% Ongkir", katTimbanganRCW, pricingVal(func(p *models.OrderPricing) float64 { return p.HargaPPNOngkir })},
+	{"Total Harga + Ongkir (Exclude PPN)", katTimbanganRCW, pricingVal(func(p *models.OrderPricing) float64 { return p.TotalHargaOngkir })},
+	{"Total Harga Jual (Include PPN)", katTimbanganRCW, pricingVal(func(p *models.OrderPricing) float64 { return p.TotalHargaJual })},
+
+	{"Wilayah Pengiriman", katTimbanganRCW, func(o *models.Order) interface{} {
+		if sh := firstShipment(o); sh != nil && sh.Wilayah != nil {
+			return sh.Wilayah.Provinsi + " - " + sh.Wilayah.KotaKab
+		}
+		return ""
+	}},
+	{"Berat (Kg)", katTimbanganRCW, func(o *models.Order) interface{} {
+		if sh := firstShipment(o); sh != nil {
+			return sh.Berat
+		}
+		return ""
+	}},
+
+	{"Harga Produk Reseller", katTimbanganRCW, pricingVal(func(p *models.OrderPricing) float64 { return p.HargaProdukReseller })},
+	{"Harga PPN 11% Reseller", katTimbanganRCW, pricingVal(func(p *models.OrderPricing) float64 { return p.HargaPPNReseller })},
+	{"Harga Ongkir Reseller", katTimbanganRCW, pricingVal(func(p *models.OrderPricing) float64 { return p.HargaOngkirReseller })},
+	{"Harga PPN 11% Ongkir Reseller", katTimbanganRCW, pricingVal(func(p *models.OrderPricing) float64 { return p.HargaPPNOngkirReseller })},
+	{"Total Harga + Ongkir Reseller (Exclude PPN)", katTimbanganRCW, pricingVal(func(p *models.OrderPricing) float64 { return p.TotalHargaOngkirReseller })},
+	{"Total Harga Reseller (Include PPN)", katTimbanganRCW, pricingVal(func(p *models.OrderPricing) float64 { return p.TotalHargaReseller })},
+
+	{"Nama Ekspedisi", katTimbanganRCW, func(o *models.Order) interface{} {
+		if sh := firstShipment(o); sh != nil && sh.Ekspedisi != nil {
+			return sh.Ekspedisi.NamaEkspedisi
+		}
+		return ""
+	}},
+	{"Resi", katTimbanganRCW, func(o *models.Order) interface{} {
+		if sh := firstShipment(o); sh != nil {
+			return strVal(sh.Resi)
+		}
+		return ""
+	}},
+	{"Tanggal Barang Diterima", katTimbanganRCW, func(o *models.Order) interface{} {
+		if sh := firstShipment(o); sh != nil {
+			return dateVal(sh.TanggalDiterima)
+		}
+		return ""
+	}},
+}
+
+func pricingVal(get func(p *models.OrderPricing) float64) func(o *models.Order) interface{} {
+	return func(o *models.Order) interface{} {
+		if o.Pricing == nil {
+			return ""
+		}
+		return get(o.Pricing)
+	}
+}
+
+func activeColumns(kategoriFilter []string) []exportColumn {
+	active := kategoriFilter
+	if len(active) == 0 {
+		active = rules.AllKategori
+	}
+
+	activeSet := make(map[string]bool, len(active))
+	for _, k := range active {
+		activeSet[k] = true
+	}
+
+	var result []exportColumn
+	for _, col := range exportColumns {
+		for _, k := range col.Kategori {
+			if activeSet[k] {
+				result = append(result, col)
+				break
+			}
+		}
+	}
+	return result
 }
 
 func (s *OrderExportService) GenerateExcel(
@@ -86,10 +342,12 @@ func (s *OrderExportService) GenerateExcel(
 		return nil, err
 	}
 
+	columns := activeColumns(filter.KategoriOrder)
+
 	f := excelize.NewFile()
 	defer f.Close()
 
-	const sheet = "IOT"
+	const sheet = "Data Pesanan"
 	f.SetSheetName(f.GetSheetName(0), sheet)
 
 	headerStyle, err := f.NewStyle(&excelize.Style{
@@ -105,32 +363,36 @@ func (s *OrderExportService) GenerateExcel(
 		return nil, err
 	}
 
-	for col, header := range exportHeaders {
-		cell, _ := excelize.CoordinatesToCellName(col+1, 1)
-		f.SetCellValue(sheet, cell, header)
-	}
-	headerRange := fmt.Sprintf("A1:%s1", mustCellName(len(exportHeaders), 1))
-	f.SetCellStyle(sheet, "A1", headerRange, headerStyle)
-	f.SetRowHeight(sheet, 1, 30)
+	for i, col := range columns {
+		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
+		f.SetCellValue(sheet, cell, col.Header)
 
-	for i, order := range orders {
-		row := i + 2
-		writeOrderRow(f, sheet, row, order)
+		colName, _ := excelize.ColumnNumberToName(i + 1)
+		width := 20.0
+		if col.Header == "Nama Instansi/Perusahaan" {
+			width = 30
+		}
+		f.SetColWidth(sheet, colName, colName, width)
 	}
 
-	for col := range exportHeaders {
-		colName, _ := excelize.ColumnNumberToName(col + 1)
-		f.SetColWidth(sheet, colName, colName, 20)
-	}
-	f.SetColWidth(sheet, "C", "C", 28) 
-	if namaEkspedisiCol, err := excelize.ColumnNumberToName(51); err == nil {
-		f.SetColWidth(sheet, namaEkspedisiCol, namaEkspedisiCol, 22) 
+	lastHeaderCell, _ := excelize.CoordinatesToCellName(len(columns), 1)
+	f.SetCellStyle(sheet, "A1", lastHeaderCell, headerStyle)
+	f.SetRowHeight(sheet, 1, 32)
+
+	for r, order := range orders {
+		o := order
+		for c, col := range columns {
+			value := col.Value(&o)
+			if s, ok := value.(string); ok && s == "" {
+				continue
+			}
+			cell, _ := excelize.CoordinatesToCellName(c+1, r+2)
+			f.SetCellValue(sheet, cell, value)
+		}
 	}
 
 	f.SetPanes(sheet, &excelize.Panes{
 		Freeze:      true,
-		Split:       false,
-		XSplit:      0,
 		YSplit:      1,
 		TopLeftCell: "A2",
 		ActivePane:  "bottomLeft",
@@ -138,134 +400,8 @@ func (s *OrderExportService) GenerateExcel(
 
 	buf, err := f.WriteToBuffer()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gagal membuat file excel: %w", err)
 	}
 
 	return buf.Bytes(), nil
-}
-
-func mustCellName(col, row int) string {
-	name, _ := excelize.CoordinatesToCellName(col, row)
-	return name
-}
-
-
-func writeOrderRow(f *excelize.File, sheet string, row int, order models.Order) {
-	values := make([]interface{}, len(exportHeaders))
-
-	values[0] = order.KodeOrder
-	values[1] = order.KategoriOrder
-
-	if order.Instansi != nil {
-		values[2] = order.Instansi.NamaInstansi
-		values[9] = strPtr(order.Instansi.KotaKab)
-		values[10] = strPtr(order.Instansi.Provinsi)
-		values[8] = strPtr(order.Instansi.Alamat)
-		values[7] = strPtr(order.Instansi.NPWP)
-	}
-
-	if order.PIC != nil {
-		values[3] = order.PIC.NamaPIC
-		values[4] = strPtr(order.PIC.NoHP)
-		values[5] = strPtr(order.PIC.Email)
-		values[6] = strPtr(order.PIC.NIK)
-	}
-
-	var totalQty int64
-	var totalHargaPPN float64
-	for _, item := range order.Items {
-		totalQty += item.Qty
-		totalHargaPPN += item.Subtotal
-	}
-	if len(order.Items) > 0 {
-		values[11] = totalQty
-		values[12] = totalHargaPPN
-	}
-
-	values[13] = strPtr(order.PeriodeLangganan)
-	values[14] = strPtr(order.Status)
-	values[15] = strPtr(order.StatusOdoo)
-
-	if order.Manual != nil {
-		values[16] = strPtr(order.Manual.BulanPengirimanSPH)
-		values[17] = strPtr(order.Manual.NomorSuratPenawaranHarga)
-		values[20] = strPtr(order.Manual.NomorFormulirBerlangganan)
-		values[21] = strPtr(order.Manual.NomorKontrakBerlangganan)
-	}
-
-	if order.Procurement != nil {
-		values[18] = strPtr(order.Procurement.NomorSuratPenyampaianDaftarHarga)
-		values[19] = strPtr(order.Procurement.NomorFormulirPembelian)
-		values[22] = strPtr(order.Procurement.NoPOKUT)
-		values[26] = strPtr(order.Procurement.NoInvoiceKUT)
-		values[27] = datePtr(order.Procurement.TanggalInvoiceKUT)
-	}
-
-	values[23] = datePtr(order.TanggalPO)
-	values[24] = datePtr(order.TanggalBAST)
-	values[25] = strPtr(order.NoBAST)
-	values[28] = strPtr(order.NoInvoiceInaproc)
-	values[29] = strPtr(order.NSFP)
-
-	if len(order.Payments) > 0 {
-		p := order.Payments[0]
-		values[30] = datePtr(p.TanggalUangMasuk)
-		values[31] = p.JumlahUangMasuk
-		values[32] = strPtr(p.Rekening)
-	}
-
-	values[33] = strPtr(order.KodeBayar)
-	values[34] = strPtr(order.Keterangan)
-
-	if order.Pricing != nil {
-		p := order.Pricing
-		values[35] = strPtr(p.TipeTimbangan)
-		values[36] = p.HargaProduk
-		values[37] = p.HargaPPN
-		values[38] = p.HargaOngkirKUT
-		values[39] = p.HargaPPNOngkir
-		values[40] = p.TotalHargaOngkir
-		values[41] = p.TotalHargaJual
-		values[44] = p.HargaProdukReseller
-		values[45] = p.HargaPPNReseller
-		values[46] = p.HargaOngkirReseller
-		values[47] = p.HargaPPNOngkirReseller
-		values[48] = p.TotalHargaOngkirReseller
-		values[49] = p.TotalHargaReseller
-	}
-
-	if len(order.Shipments) > 0 {
-		sh := order.Shipments[0]
-		if sh.Wilayah != nil {
-			values[42] = sh.Wilayah.Provinsi + " - " + sh.Wilayah.KotaKab
-		}
-		values[43] = sh.Berat
-		if sh.Ekspedisi != nil {
-			values[50] = sh.Ekspedisi.NamaEkspedisi
-		}
-		values[51] = strPtr(sh.Resi)
-		values[52] = datePtr(sh.TanggalDiterima)
-	}
-
-	for col, value := range values {
-		if value == nil {
-			continue
-		}
-		cell, _ := excelize.CoordinatesToCellName(col+1, row)
-		f.SetCellValue(sheet, cell, value)
-	}
-}
-
-func strPtr(v *string) string {
-	if v == nil {
-		return ""
-	}
-	return *v
-}
-
-func datePtr(v *models.Date) string {
-	if v == nil {
-		return ""
-	}
-	return string(*v)
 }

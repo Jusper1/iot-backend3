@@ -182,7 +182,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	protected.GET("/order-pricing/order/:order_id", pricingHandler.FindByOrderID)
 	protected.GET("/order-pricing/:id", pricingHandler.FindByID)
 	protected.POST("/order-pricing", pricingHandler.Create)
-	protected.PUT("/order-pricing/:id", pricingHandler.Update)
+	protected.PUT("/order-pricing/:id",   pricingHandler.Update)
 	protected.DELETE("/order-pricing/order/:order_id", pricingHandler.DeleteByOrderID)
 
 	// ORDER DOCUMENT
