@@ -61,9 +61,9 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	paymentServiceInst := services.NewPaymentService(paymentRepository)
 	spjServiceInst := services.NewSPJService(spjRepository)
 	documentServiceInst := services.NewDocumentService(documentRepository)
-	iotInaprocService := services.NewIOTInaprocService(iotInaprocRepository)
-	iotManualService := services.NewIOTManualService(iotManualRepository)
-	timbanganServiceInst := services.NewTimbanganService(timbanganRepository)
+	iotInaprocService := services.NewIOTInaprocService(iotInaprocRepository, picRepository, instansiRepository)
+	iotManualService := services.NewIOTManualService(iotManualRepository, picRepository, instansiRepository)
+	timbanganServiceInst := services.NewTimbanganService(timbanganRepository, picRepository, instansiRepository)
 	orderExportServiceInst := services.NewOrderExportService(orderExportRepository)
 
 	// HANDLER

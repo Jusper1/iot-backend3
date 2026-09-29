@@ -2,11 +2,16 @@ package models
 
 type TimbanganCreateRequest struct {
 	KodeOrder     string `json:"kode_order"`
-	JenisOrder    string `json:"jenis_order"`    // "inaproc" atau "manual"
-	KategoriOrder string `json:"kategori_order"` // timbangan_inaproc | timbangan_manual | rcw_360 | rcw_800w
+	JenisOrder    string `json:"jenis_order"`    
+	KategoriOrder string `json:"kategori_order"` 
 
 	InstansiID uint `json:"instansi_id"`
-	PicID      uint `json:"pic_id"`
+
+	PicID uint              `json:"pic_id"`
+	Pic   *ManualPICRequest `json:"pic"`
+
+	Address   *AddressOverride `json:"address"`
+	PicUpdate *PicOverride     `json:"pic_update"`
 
 	Status     *string `json:"status"`
 	StatusOdoo *string `json:"status_odoo"`
@@ -22,7 +27,6 @@ type TimbanganCreateRequest struct {
 	TanggalBAST *Date   `json:"tanggal_bast"`
 
 	Items []TimbanganItemRequest `json:"items"`
-
 
 	Procurement *TimbanganProcurementRequest `json:"procurement"`
 	Pricing *TimbanganPricingRequest `json:"pricing"`

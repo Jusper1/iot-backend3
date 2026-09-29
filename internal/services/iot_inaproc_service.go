@@ -6,18 +6,25 @@ import (
 
 	"iot-backend/internal/models"
 	"iot-backend/internal/repositories"
+	"iot-backend/internal/repositories/master"
 	"iot-backend/internal/rules"
 )
 
 type IOTInaprocService struct {
-	Repository *repositories.IOTInaprocRepository
+	Repository  *repositories.IOTInaprocRepository
+	PicRepo     *master.PICRepository      
+	InstansiRepo *master.InstansiRepository 
 }
 
 func NewIOTInaprocService(
 	repository *repositories.IOTInaprocRepository,
+	picRepo *master.PICRepository,
+	instansiRepo *master.InstansiRepository, 
 ) *IOTInaprocService {
 	return &IOTInaprocService{
-		Repository: repository,
+		Repository:   repository,
+		PicRepo:      picRepo,
+		InstansiRepo: instansiRepo,
 	}
 }
 
@@ -71,10 +78,6 @@ func (s *IOTInaprocService) CreateFull(
 		return nil, errors.New("instansi_id wajib diisi")
 	}
 
-	if req.PicID == 0 {
-		return nil, errors.New("pic_id wajib diisi")
-	}
-
 	if len(req.Items) == 0 {
 		return nil, errors.New("minimal harus ada 1 produk")
 	}
@@ -108,7 +111,18 @@ func (s *IOTInaprocService) CreateFull(
 
 
 	instansiID := req.InstansiID
-	picID := req.PicID
+
+	picID, err := ResolvePicID(s.PicRepo, instansiID, req.PicID, req.Pic)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := ApplyAddressOverride(s.InstansiRepo, instansiID, req.Address); err != nil {
+		return nil, err
+	}
+	if err := ApplyPicOverride(s.PicRepo, picID, req.PicUpdate); err != nil {
+		return nil, err
+	}
 
 	order := &models.Order{
 		KodeOrder:        req.KodeOrder,
@@ -179,6 +193,7 @@ func (s *IOTInaprocService) Update(id uint, data map[string]interface{}) error {
 	if kodeOrder != order.KodeOrder {
 		return errors.New("kode_order tidak dapat diubah")
 	}
+
 
 	if raw, touched := data["status"]; touched {
 		if v, ok := raw.(string); ok && v != "" && !rules.IsValidStatusPesanan(v) {

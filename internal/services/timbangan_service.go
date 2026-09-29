@@ -6,18 +6,25 @@ import (
 
 	"iot-backend/internal/models"
 	"iot-backend/internal/repositories"
+	"iot-backend/internal/repositories/master"
 	"iot-backend/internal/rules"
 )
 
 type TimbanganService struct {
-	Repository *repositories.TimbanganRepository
+	Repository   *repositories.TimbanganRepository
+	PicRepo      *master.PICRepository
+	InstansiRepo *master.InstansiRepository 
 }
 
 func NewTimbanganService(
 	repository *repositories.TimbanganRepository,
+	picRepo *master.PICRepository,
+	instansiRepo *master.InstansiRepository,
 ) *TimbanganService {
 	return &TimbanganService{
-		Repository: repository,
+		Repository:   repository,
+		PicRepo:      picRepo,
+		InstansiRepo: instansiRepo,
 	}
 }
 
@@ -51,9 +58,6 @@ func (s *TimbanganService) CreateFull(
 
 	if req.InstansiID == 0 {
 		return nil, errors.New("instansi_id wajib diisi")
-	}
-	if req.PicID == 0 {
-		return nil, errors.New("pic_id wajib diisi")
 	}
 
 	if req.Status != nil && *req.Status != "" && !rules.IsValidStatusPesanan(*req.Status) {
@@ -111,12 +115,24 @@ func (s *TimbanganService) CreateFull(
 		return nil, errors.New("kode_order sudah digunakan")
 	}
 
+	picID, err := ResolvePicID(s.PicRepo, req.InstansiID, req.PicID, req.Pic)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := ApplyAddressOverride(s.InstansiRepo, req.InstansiID, req.Address); err != nil {
+		return nil, err
+	}
+	if err := ApplyPicOverride(s.PicRepo, picID, req.PicUpdate); err != nil {
+		return nil, err
+	}
+
 	order := &models.Order{
 		KodeOrder:        req.KodeOrder,
 		JenisOrder:       req.JenisOrder,
 		KategoriOrder:    req.KategoriOrder,
-		InstansiID:       &req.InstansiID, 
-		PicID:            &req.PicID,     
+		InstansiID:       &req.InstansiID,
+		PicID:            &picID,   
 		Status:           req.Status,
 		StatusOdoo:       req.StatusOdoo,
 		NSFP:             req.NSFP,
@@ -127,6 +143,7 @@ func (s *TimbanganService) CreateFull(
 		TanggalPO:        req.TanggalPO,
 		NoPO:             req.NoPO,
 		TanggalBAST:      req.TanggalBAST,
+		// PeriodeLangganan .
 	}
 
 	if err := s.Repository.CreateFull(req, order); err != nil {

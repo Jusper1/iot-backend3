@@ -4,7 +4,10 @@ type IOTInaprocCreateRequest struct {
 	KodeOrder string `json:"kode_order"`
 
 	InstansiID uint `json:"instansi_id"`
-	PicID      uint `json:"pic_id"`
+	PicID uint              `json:"pic_id"`
+	Pic   *ManualPICRequest `json:"pic"`
+	Address   *AddressOverride `json:"address"`
+	PicUpdate *PicOverride     `json:"pic_update"`
 
 	Status     *string `json:"status"`
 	StatusOdoo *string `json:"status_odoo"`

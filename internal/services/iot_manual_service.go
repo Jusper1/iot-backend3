@@ -6,18 +6,25 @@ import (
 
 	"iot-backend/internal/models"
 	"iot-backend/internal/repositories"
+	"iot-backend/internal/repositories/master"
 	"iot-backend/internal/rules"
 )
 
 type IOTManualService struct {
-	Repository *repositories.IOTManualRepository
+	Repository   *repositories.IOTManualRepository
+	PicRepo      *master.PICRepository      
+	InstansiRepo *master.InstansiRepository 
 }
 
 func NewIOTManualService(
 	repository *repositories.IOTManualRepository,
+	picRepo *master.PICRepository, 
+	instansiRepo *master.InstansiRepository,
 ) *IOTManualService {
 	return &IOTManualService{
-		Repository: repository,
+		Repository:   repository,
+		PicRepo:      picRepo,
+		InstansiRepo: instansiRepo,
 	}
 }
 
@@ -45,10 +52,6 @@ func (s *IOTManualService) CreateFull(
 		return nil, errors.New("instansi_id wajib diisi")
 	}
 
-	if req.PicID == 0 {
-		return nil, errors.New("pic_id wajib diisi")
-	}
-
 	if len(req.Items) == 0 {
 		return nil, errors.New("minimal harus ada 1 produk")
 	}
@@ -71,6 +74,7 @@ func (s *IOTManualService) CreateFull(
 		return nil, errors.New("status odoo tidak ada di daftar yang diperbolehkan")
 	}
 
+
 	existing, err := s.Repository.FindByKode(req.KodeOrder)
 
 	if err == nil && existing != nil {
@@ -78,7 +82,18 @@ func (s *IOTManualService) CreateFull(
 	}
 
 	instansiID := req.InstansiID
-	picID := req.PicID
+
+	picID, err := ResolvePicID(s.PicRepo, instansiID, req.PicID, req.Pic)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := ApplyAddressOverride(s.InstansiRepo, instansiID, req.Address); err != nil {
+		return nil, err
+	}
+	if err := ApplyPicOverride(s.PicRepo, picID, req.PicUpdate); err != nil {
+		return nil, err
+	}
 
 	order := &models.Order{
 		KodeOrder:        req.KodeOrder,

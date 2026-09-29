@@ -5,6 +5,10 @@ type IOTManualCreateRequest struct {
 
 	InstansiID uint `json:"instansi_id"`
 	PicID      uint `json:"pic_id"`
+	Pic   *ManualPICRequest `json:"pic"`
+
+	Address   *AddressOverride `json:"address"`
+	PicUpdate *PicOverride     `json:"pic_update"`
 
 	Status     *string `json:"status"`
 	StatusOdoo *string `json:"status_odoo"`
