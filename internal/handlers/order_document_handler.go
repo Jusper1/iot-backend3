@@ -43,7 +43,6 @@ func (h *OrderDocumentHandler) Create(c *gin.Context) {
 		"data":    data,
 	})
 }
-
 func (h *OrderDocumentHandler) FindByID(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {

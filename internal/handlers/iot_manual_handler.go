@@ -133,7 +133,6 @@ func (h *IOTManualHandler) Update(c *gin.Context) {
 		})
 		return
 	}
-
 	if len(body) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,

@@ -27,7 +27,6 @@ func main() {
 	r := gin.Default()
 
 	// CORS
-
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
 			"http://localhost:5173",

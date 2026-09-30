@@ -184,7 +184,6 @@ func (h *IOTInaprocHandler) Delete(c *gin.Context) {
 		})
 		return
 	}
-
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "IOT INAPROC berhasil dihapus",

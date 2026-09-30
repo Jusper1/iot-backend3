@@ -68,6 +68,7 @@ func (h *OrderHandler) FindByID(c *gin.Context) {
 		"data":    data,
 	})
 }
+
 func (h *OrderHandler) FindByKode(c *gin.Context) {
 	kode := c.Param("kode")
 

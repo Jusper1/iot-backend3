@@ -6,24 +6,18 @@ var JenisKertasOptions = []string{
 }
 
 var TipeTimbanganOptions = []string{
-	"1 KG",
-	"3 KG",
-	"13 KG",
-	"31 KG",
+	"Digital 150 Kg",
 }
 
 var KodeBayarOptions = []string{
-	"UP",
 	"LS",
+	"UP",
 }
 
 var StatusPesananOptions = []string{
 	"pending",
 	"baru",
 	"diproses",
-	"Dikirim",
-	"selesai",
-	"batal",
 }
 
 var StatusOdooOptions = []string{
@@ -44,9 +38,9 @@ func contains(list []string, value string) bool {
 	return false
 }
 
-func IsValidJenisKertas(value string) bool   { return contains(JenisKertasOptions, value) }
-func IsValidTipeTimbangan(value string) bool { return contains(TipeTimbanganOptions, value) }
-func IsValidKodeBayar(value string) bool     { return contains(KodeBayarOptions, value) }
-func IsValidStatusPesanan(value string) bool { return contains(StatusPesananOptions, value) }
-func IsValidStatusOdoo(value string) bool    { return contains(StatusOdooOptions, value) }
-func IsValidJenisFile(value string) bool     { return contains(JenisFileOptions, value) }
+func IsValidJenisKertas(value string) bool    { return contains(JenisKertasOptions, value) }
+func IsValidTipeTimbangan(value string) bool  { return contains(TipeTimbanganOptions, value) }
+func IsValidKodeBayar(value string) bool      { return contains(KodeBayarOptions, value) }
+func IsValidStatusPesanan(value string) bool  { return contains(StatusPesananOptions, value) }
+func IsValidStatusOdoo(value string) bool     { return contains(StatusOdooOptions, value) }
+func IsValidJenisFile(value string) bool      { return contains(JenisFileOptions, value) }
