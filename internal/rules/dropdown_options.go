@@ -6,7 +6,10 @@ var JenisKertasOptions = []string{
 }
 
 var TipeTimbanganOptions = []string{
-	"Digital 150 Kg",
+	"1 Kg",
+	"3 Kg",
+	"13 Kg",
+	"31 Kg",
 }
 
 var KodeBayarOptions = []string{
