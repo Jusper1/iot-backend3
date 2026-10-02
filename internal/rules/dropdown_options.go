@@ -21,6 +21,9 @@ var StatusPesananOptions = []string{
 	"pending",
 	"baru",
 	"diproses",
+	"Dikirim",
+	"selesai",
+	"batal",
 }
 
 var StatusOdooOptions = []string{
